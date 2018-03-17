@@ -17,13 +17,13 @@ group to master: group each selected image with its master image.
 
 update from master: copy master image's metadata to selected images, based on the following switches:
 
-  - rate & color
+    - rate & color
   
-  - metadata
+    - metadata
   
-  - GPS data
+    - GPS data
   
-  - tags
+    - tags
 
 copy: copy selected image's metadata
 
