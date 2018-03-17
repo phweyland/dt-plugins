@@ -1,5 +1,5 @@
 local dt = require "darktable"
-local dbg = require "darktable.debug"
+--local dbg = require "darktable.debug"
 
 --[[  -- ZBS settings
 package.cpath = "C:/Documents/Darktable/lua/luasocket/?.dll;"..package.cpath
