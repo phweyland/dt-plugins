@@ -5,7 +5,7 @@ tested with Windows and darktabel 2.4.1
 
 set master: apply darktable|group|master tag to selected images
 
-group to master: group seach selected image with its master image. 
+group to master: group each selected image with its master image. 
   a master image is recognized as follow:
     - belongs to parent folder of selected image
     - tagged as darktable|group|master
