@@ -18,7 +18,6 @@ group to master: group each selected image with its master image.
 update from master: copy master image's metadata to selected images, based on the following switches:
 
     - rate & color
-  
     - metadata
   
     - GPS data
