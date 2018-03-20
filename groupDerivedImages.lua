@@ -1,7 +1,31 @@
 local dt = require "darktable"
---local dbg = require "darktable.debug"
+-- local dbg = require "darktable.debug"
+
+--[[
+Assume that derived images are stored in a sub-folder of master images.
+Assume that derived images can come from external editors
+	Group derived images to master ones
+	(Re)Apply master images metadata to derived images
+Available commands:
+- set master: apply darktable|group|master tag to selected images
+- group to master: group each selected image with its master image.
+  A master image is recognized as follow:
+    - belongs to parent folder of selected image
+    - tagged as darktable|group|master
+    - filename (without extension) included in selected image filename. Examples:
+      20180315_BH.nef can be mater image of 20180315_BH.jpg or 20180315_BH-NVf.jpg
+- update from master: copy master image's metadata to selected images, based on the following switches:
+    - rate & color
+    - metadata
+    - GPS data
+    - tags
+- copy: copy selected image's metadata
+- paste: paste copied metadata to selected images, based on previous switches.
+- clear: clear selected images' metadata, based on previous switches.
+]]
 
 --[[  -- ZBS settings
+-- So far I didn't succeed using ZeroBraneStudio with darktable.
 package.cpath = "C:/Documents/Darktable/lua/luasocket/?.dll;"..package.cpath
 package.path = package.path..";C:/Program Files (x86)/ZeroBraneStudio/lualibs/mobdebug/?.lua;C:/Program Files (x86)/ZeroBraneStudio/lualibs/?.lua"
 require('mobdebug').start()
@@ -54,13 +78,13 @@ local function groupDerivedImages()
 		list[i].image = image
 		list[i].ppath = image.path:match("(.-)[\\/][^\\/]+$")
 		list[i].mfilm = getfilm(list[i].ppath)
-		if list[i].mfilm ~= nil then 
+		if list[i].mfilm ~= nil then
 			list[i].mimage = getmasterimage(image.filename, list[i].mfilm)
-			if list[i].mimage ~= nil then 
+			if list[i].mimage ~= nil then
 				list[i].mfilename = list[i].mimage.filename
 			end
 		end
-    end	
+    end
 		for _,image in pairs(list) do
 		-- put the image in the group of the master image
 		if image.mimage ~= nil then image.image:group_with(image.mimage) end
@@ -202,8 +226,8 @@ local function updateDerivedMetadata()
         end
 			end
 		end
-  end	
-	
+  end
+
 	for _,grp in pairs(list) do
     if grp.mimage ~= nil then
       copyMetadata(grp.mimage)
@@ -305,6 +329,7 @@ local bclearmetadata = dt.new_widget("button")
 
 -- widget definition
 if (dt.configuration.api_version_major >= 6) then
+-- not tested and to be updated for version >= 6
   dt.print("´part to be completed")
   local section_label = dt.new_widget("section_label")
   {
@@ -362,7 +387,7 @@ else
         },
        dt.new_widget("box") -- widget
         {
-          orientation = "vertical",        
+          orientation = "vertical",
           bGPS,
           bTags
         }
@@ -400,25 +425,25 @@ dt.register_event(
 
 --[[
 -- preferences
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference. 
+dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                         "copyTags",  -- name
                         "bool",                       -- type
                         "g-copy tags",           -- label
                         "Overwrite existing data",   -- tooltip
                         true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference. 
+dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                         "copyGPS",  -- name
                         "bool",                       -- type
                         "g-copy GPS",           -- label
                         "Copy GPS",   -- tooltip
                         true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference. 
+dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                         "copyMetadata",  -- name
                         "bool",                       -- type
                         "g-copy metadata",           -- label
                         "Copy metadata",   -- tooltip
                         true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference. 
+dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                         "copyRateColor",  -- name
                         "bool",                       -- type
                         "g-copy rate & color",           -- label
