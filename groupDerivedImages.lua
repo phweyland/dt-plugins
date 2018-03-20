@@ -1,6 +1,6 @@
 local dt = require "darktable"
 -- local dbg = require "darktable.debug"
--- test commit + push
+
 --[[
 Assume that derived images are stored in a sub-folder of master images.
 Assume that derived images can come from external editors
@@ -35,7 +35,6 @@ require('mobdebug').start()
 --]]
 
 local gettext = dt.gettext
---package.cpath = "C:/Program Files/darktable/bin/?.dll;"..package.cpath
 dt.configuration.check_version(...,{2,0,0},{3,0,0},{4,0,0},{5,0,0})
 -- Tell gettext where to find the .mo file translating messages for a particular domain
 gettext.bindtextdomain("test",dt.configuration.config_dir.."/lua/locale/")
@@ -90,7 +89,7 @@ local function groupDerivedImages()
 		if image.mimage ~= nil then image.image:group_with(image.mimage) end
 --message = message.." "..image.image.filename.." -> ".. tostring(image.mfilename).."\n"
 	end
---dt.print(message)
+--dt.print_log(message)
 end
 
 
@@ -210,7 +209,6 @@ end
 local function updateDerivedMetadata()
 	local list = {}
 --	local message = ""
---  require('mobdebug').on()
 	for i,image in ipairs(dt.gui.action_images) do
 		list[i] = {}
 		list[i].image = image
@@ -235,7 +233,7 @@ local function updateDerivedMetadata()
 --message = message.. tostring(grp.mimage.id).." "..tostring(grp.image.id).."\n"
     end
 	end
---dt.print(message)
+--dt.print_log(message)
 end
 
 -- set images as master
@@ -300,31 +298,31 @@ local bgrouptomaster = dt.new_widget("button")
 }
 local bupdatefrommaster = dt.new_widget("button")
 {
-        label = "update from master",
-        clicked_callback = function (_)
-          updateDerivedMetadata()
-        end
+	label = "update from master",
+  clicked_callback = function (_)
+  	updateDerivedMetadata()
+  end
 }
 local bcopymetadata = dt.new_widget("button")
 {
-        label = "       copy           ",
-        clicked_callback = function (_)
-          copyMetadata(dt.gui.action_images[1])
-        end
+  label = "       copy           ",
+  clicked_callback = function (_)
+    copyMetadata(dt.gui.action_images[1])
+  end
 }
 local bpastemetadata = dt.new_widget("button")
 {
-        label = "       paste         ",
-        clicked_callback = function (_)
-          mpasteMetadata(dt.gui.action_images)
-        end
+  label = "       paste         ",
+	clicked_callback = function (_)
+    mpasteMetadata(dt.gui.action_images)
+  end
 }
 local bclearmetadata = dt.new_widget("button")
 {
-        label = "       clear         ",
-        clicked_callback = function (_)
-          mclearMetadata()
-        end
+  label = "       clear         ",
+  clicked_callback = function (_)
+    mclearMetadata()
+  end
 }
 
 -- widget definition
@@ -421,32 +419,3 @@ dt.register_event(
   "exit",
   function() savepreference() end
 )
-
-
---[[
--- preferences
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
-                        "copyTags",  -- name
-                        "bool",                       -- type
-                        "g-copy tags",           -- label
-                        "Overwrite existing data",   -- tooltip
-                        true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
-                        "copyGPS",  -- name
-                        "bool",                       -- type
-                        "g-copy GPS",           -- label
-                        "Copy GPS",   -- tooltip
-                        true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
-                        "copyMetadata",  -- name
-                        "bool",                       -- type
-                        "g-copy metadata",           -- label
-                        "Copy metadata",   -- tooltip
-                        true)                         -- default
-dt.preferences.register("groupDerivedImages",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
-                        "copyRateColor",  -- name
-                        "bool",                       -- type
-                        "g-copy rate & color",           -- label
-                        "Copy rate & color",   -- tooltip
-                        true)                         -- default
---]]
