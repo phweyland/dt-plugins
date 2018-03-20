@@ -1,6 +1,6 @@
 local dt = require "darktable"
 -- local dbg = require "darktable.debug"
-
+-- test commit + push
 --[[
 Assume that derived images are stored in a sub-folder of master images.
 Assume that derived images can come from external editors
