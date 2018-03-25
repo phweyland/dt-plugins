@@ -2,7 +2,7 @@
     Tested with darktable 2.4.1 on Windows 10. Needs more work to run on Linux
 
     fileondiskExif.lua - export images to a given folder and set Metadata
-    using ExifTool:
+    using ExifTool. exported selected - "file on disk (Exif)":
       - darktable Metadata
       - GPS data
       - HierarchicalSubject
@@ -74,7 +74,6 @@ local function setPrivateTags(privateTagsList)
   return privateTags
 end
 
---local privateTags = {"gens","piwigo"}
 local privateTagsList = ""
 local privateTags = {}
 
@@ -121,16 +120,10 @@ local target_folderb = dt.new_widget("file_chooser_button")
       dt.preferences.write("prefExifTool","TargetFolder","directory",self.value)
     end
 }
---[[
-local executables = {"ExifTool"}
-if dt.configuration.running_os ~= "linux" then
-  ExifTool_widget = df.executable_path_widget(executables)
-end
---]]
+
 local fileondiskExif_widget = dt.new_widget("box") -- widget
 {
    orientation = "vertical",
---   ExifTool_widget,
    target_folderb
 }
 
@@ -216,6 +209,7 @@ local function ExifTool_metadata(storage, image_table, extra_data) --finalize
       if image.rights then
         metadata = metadata.." -XMP:Rights=\""..image.rights.."\""
       end
+      dt.print_log("Metadata: "..metadata)
       -- GPS
       local GPSdata = ""
       if image.latitude then
@@ -227,6 +221,8 @@ local function ExifTool_metadata(storage, image_table, extra_data) --finalize
       if image.elevation then
         GPSdata = GPSdata.." -XMP:GPSAltitude=\""..image.elevation.."\""
       end
+      dt.print_log("GPSdata: "..GPSdata)
+
             -- Run ExifTool
       ExifStartCommand = string.gsub(ExifTool_executable,"[\"]+","")
       ExifStartCommand = ExifStartCommand.." -@ "..string.gsub(ArgumentFile,"[\"|\']+","")
