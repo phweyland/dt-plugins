@@ -2,6 +2,8 @@ local dt = require "darktable"
 -- local dbg = require "darktable.debug"
 
 --[[
+Tested with darktable 2.4.1 on Windows 10. Needs more work to run on Linux
+
 Assume that derived images are stored in a sub-folder of master images.
 Assume that derived images can come from external editors
 	Group derived images to master ones
