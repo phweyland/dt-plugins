@@ -194,19 +194,19 @@ local function ExifTool_metadata(storage, image_table, extra_data) --finalize
       dt.print_log("Subject: "..Subject)
       -- Metadata
       local metadata = ""
-      if image.title then
+      if image.title ~= "" then
         metadata = metadata.." -XMP:Title=\""..image.title.."\""
       end
-      if image.description then
+      if image.description ~= "" then
         metadata = metadata.." -XMP:Description=\""..image.description.."\""
       end
-      if image.publisher then
+      if image.publisher ~= "" then
         metadata = metadata.." -XMP:Publisher=\""..image.publisher.."\""
       end
-      if image.creator then
+      if image.creator ~= "" then
         metadata = metadata.." -XMP:Creator=\""..image.creator.."\""
       end
-      if image.rights then
+      if image.rights ~= "" then
         metadata = metadata.." -XMP:Rights=\""..image.rights.."\""
       end
       dt.print_log("Metadata: "..metadata)
