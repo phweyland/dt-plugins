@@ -1,6 +1,16 @@
 --[[
     Tested with darktable 2.4.1 on Windows 10. Needs more work to run on Linux
-    fileondiskExif.lua - export to a give folder and set wanted Metadata
+
+    fileondiskExif.lua - export images to a given folder and set Metadata
+    using ExifTool:
+      - darktable Metadata
+      - GPS data
+      - HierarchicalSubject
+        - eliminate private tags (based on first level of tags declared as
+        private in Preferences). Examples: people
+        - eliminate first level of tags (considered as categories only local
+        to dt). Examples: people, places, ...
+      - Subject. From the previous list, establish the individuals tags list
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
