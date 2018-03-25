@@ -3,13 +3,7 @@
 -all=
 -tagsFromFile
 @
--title
--caption
 
--comment
-
--ICC_Profile
--ThumbnailImage
 -EXIF:ColorSpace
 -EXIF:LightSource
 -EXIF:FileSource
@@ -31,10 +25,11 @@
 -EXIF:FocalLengthIn35mmFormat
 -EXIF:LensInfo
 -EXIF:LensModel
+-EXIF:ExposureCompensation
 
 -XMP:Creator
 -XMP:Rights
-#-XMP:Subject
+-XMP:Subject
 
 -GPSVersionID
 -GPSLatitudeRef
@@ -47,8 +42,6 @@
 -XMP:GPSLatitude
 -XMP:GPSAltitude
 
--XMP:HierarchicalSubject
--sep
-, 
--XMP:Hierarchicalsubject<${Hierarchicalsubject@;/^gens\|.*/ ? $_=undef : s/[^\|]+\|//}
-#-XMP:Subject
+#-sep
+#,
+#-XMP:Hierarchicalsubject<${Hierarchicalsubject@;/^gens\|.*/ ? $_=undef : s/[^\|]+\|//}

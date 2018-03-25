@@ -44,8 +44,37 @@ local function _(msgid)
     return gettext.dgettext("ExifTool", msgid)
 end
 
---local ExifTool_executable = dt.preferences.read("prefExifTool","ExifTool","file")
-local ArgumentFile = dt.preferences.read("prefExifTool","ExifArgFile","file")
+local privateTags = {"gens","piwigo"}
+
+local function removeDuplicate(keywords)
+  local i = 0
+  local newKeywords = ""
+  while keywords:len() > 0 and i < 100 do
+    keyword = string.match(keywords,"([^,]*),")
+    if not keyword then -- last keyword
+      keyword = keywords
+      keywords = ""
+    end
+    if keyword then
+      if keywords ~= "" then
+        keywords = string.sub(keywords,keyword:len()+3)
+      end
+      if newKeywords == ""
+      then newKeywords = keyword
+      else
+        if not string.match(newKeywords,keyword) then
+          if newKeywords ~= "" then
+            newKeywords = newKeywords..", "
+          end
+          newKeywords = newKeywords..keyword
+        end
+      end
+    end
+--    dt.print_log("keys: "..tostring(keywords).." key: "..tostring(keyword).." nkeys: "..tostring(newKeywords))
+    i = i + 1  -- not too sure to exit always properly
+  end
+  return newKeywords
+end
 
 local target_folderb = dt.new_widget("file_chooser_button")
 {
@@ -57,16 +86,16 @@ local target_folderb = dt.new_widget("file_chooser_button")
       dt.preferences.write("prefExifTool","TargetFolder","directory",self.value)
     end
 }
-
+--[[
 local executables = {"ExifTool"}
 if dt.configuration.running_os ~= "linux" then
   ExifTool_widget = df.executable_path_widget(executables)
 end
-
+--]]
 local exportToWeb_widget = dt.new_widget("box") -- widget
 {
    orientation = "vertical",
-   ExifTool_widget,
+--   ExifTool_widget,
    target_folderb
 }
 
@@ -78,8 +107,8 @@ end
 
 local function ExifTool_metadata(storage, image_table, extra_data) --finalize
 
-  --local ExifTool_executable = dt.preferences.read("prefExifTool","ExifTool","file")
-  local ExifTool_executable = df.check_if_bin_exists("ExifTool")
+  local ExifTool_executable = dt.preferences.read("prefExifTool","ExifTool","file")
+  ExifTool_executable = df.check_if_bin_exists(ExifTool_executable)
   if not ExifTool_executable then
     dt.print(_("ExitTool not found, see preferences"))
     return
@@ -105,18 +134,47 @@ local function ExifTool_metadata(storage, image_table, extra_data) --finalize
     local result = df.file_move(exported_image, myimage_name)
     dt.print_log(exported_image .. " moved to " .. myimage_name)
     if result then
-      ExifStartCommand = ExifTool_executable.." -@ "..string.gsub(ArgumentFile,"[\"|\']+","").." "..myimage_name
+      HSubject = ""; Subject = ""
+      for _, tag in ipairs(image:get_tags()) do
+        if not (string.sub(tag.name, 1, string.len("darktable|")) == "darktable|") then
+          local privateTag = false
+          for _, ptag in ipairs(privateTags) do
+--        dt.print_log("private: "..ptag.." "..tag.name)
+            if (string.sub(tag.name, 1, string.len(ptag)) == ptag) then
+              privateTag = true
+              break
+            end
+          end
+          if not privateTag then
+            category = string.match(tag.name,"([^|]+)")
+            hierarchicaltag = string.sub(tag.name,category:len()+2)
+  --      dt.print_log(hierarchicaltag)
+            if HSubject ~= ""
+            then HSubject = HSubject..", " end
+            HSubject = HSubject..hierarchicaltag
+--            dt.print_log("keywords: "..HSubject)
+          end
+        end
+      end
+      dt.print_log("HierarchicalSubject: "..HSubject)
+      Subject = removeDuplicate(string.gsub(HSubject,"|",", "))
+      dt.print_log("Subject: "..Subject)
+      ExifStartCommand = string.gsub(ExifTool_executable,"[\"]+","")
+      ExifStartCommand = ExifStartCommand.." -@ "..string.gsub(ArgumentFile,"[\"|\']+","")
+      if HSubject ~= "" then
+        ExifStartCommand = ExifStartCommand.." -sep \", \" -HierarchicalSubject=\""..HSubject.."\""
+        ExifStartCommand = ExifStartCommand.." -sep \", \" -Subject=\""..Subject.."\""
+      end
+      ExifStartCommand = ExifStartCommand.." "..myimage_name
       dt.print_log(ExifStartCommand)
       dt.control.execute(ExifStartCommand)
     end
   end
-
-
 end
 
 -- Register
-dt.print_log("Target folder :"..target_folderb.value)
---[[
+dt.print_log("Target folder :"..tostring(target_folderb.value))
+
 if dt.configuration.running_os ~= "linux" then
   dt.preferences.register("prefExifTool",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                           "ExifTool",  -- name
@@ -126,8 +184,8 @@ if dt.configuration.running_os ~= "linux" then
                           "")                           -- default
   dt.print_log("register exiftool executable")
 end
-dt.print_log("ExifTool executable :"..ExifTool_executable)
---]]
+dt.print_log("ExifTool executable :"..tostring(ExifTool_executable))
+
 dt.preferences.register("prefExifTool",        -- script: This is a string used to avoid name collision in preferences (i.e namespace). Set it to something unique, usually the name of the script handling the preference.
                         "ExifArgFile",  -- name
                         "file",                       -- type
