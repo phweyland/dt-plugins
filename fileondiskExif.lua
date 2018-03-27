@@ -12,6 +12,10 @@
         to dt). Examples: people, places, ...
       - Subject. From the previous list, establish the individuals tags list
 
+    ExifTool is called with an argument file (ExifWeb.txt) which give some
+    generic commands and let you choose the EXIF tags you want to let with
+    the distributed images.
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
