@@ -1,3 +1,7 @@
+#------------------------------------------------------------------------------
+# Exiftool Argument file written to work with plugin fileondiskExif
+# remove all tags from image except the EXIF ones which are listed below.
+#------------------------------------------------------------------------------
 -P
 -overwrite_original
 -all=

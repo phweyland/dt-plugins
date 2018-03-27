@@ -1,3 +1,19 @@
+#------------------------------------------------------------------------------
+# Exiftool Argument file written to clean up darktable images
+# remove all tags from image except
+# - EXIF ones which are listed below.
+# - darktable metadata (title, ...)
+# - GPS data
+# - darktable tags but transformed that way:
+#     - eliminate full tags where the first level is considered as "private":
+#       "gens" and "piwigo" in the file below
+#     - remove the first level of remaining tags. That way places|France|Paris
+#       becomes France|Paris. "places" is not an interesting keyword
+#     - the result updates XMP:HierarchicalSubject
+#     - this list is used and transformed to set XMP:Subject. Duplicates are
+#       removed.
+#------------------------------------------------------------------------------
+
 -P
 -overwrite_original
 
@@ -40,9 +56,8 @@
 -m
 -XMP:Subject<${HierarchicalSubject;s/((gens|piwigo)\|[^,]+, |, (gens|piwigo)\|[^,]+|$)//g;s/(^|, )[^\|]+\|/$1/g;s/\|/, /g;NoDups}
 -sep
-, 
+,
 -m
 -XMP:HierarchicalSubject<${HierarchicalSubject;s/((gens|piwigo)\|[^,]+, |, (gens|piwigo)\|[^,]+|$)//g;s/(^|, )[^\|]+\|/$1/g}
 -sep
-, 
-
+,

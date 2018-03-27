@@ -7,10 +7,11 @@ its smallest quality.
 
 ## group Derived Images
 
-  Assume that derived images are stored in a sub-folder of master images.
+  Assume that derived images are stored in a sub-folder of master images. They
+  may have been created with another application.
 
-- Group derived images to master
-- Apply master images metadata to derived images
+- Group selected derived images to master
+- Apply master images metadata to selected derived images
 
   tested with Windows 10 64-bits and darktable 2.4.1
 
@@ -24,8 +25,9 @@ its smallest quality.
 
 ## ExifToolWeb.txt
 
-  Not a plugin but an argument file for ExifTool. It does then the same job
-  as the previous plugin but probably much faster.
+  Not a plugin but an argument file for ExifTool. To be used after native
+  file on disk export selected. It does the same job as the previous
+  plugin but probably much faster.
 
   Command line : path\exiftool.exe -@ path\ExifToolWeb.txt FILES
 
