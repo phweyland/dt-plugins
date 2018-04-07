@@ -163,43 +163,74 @@ local function maintain_reset(widget)
 end
 
 local function show_orphan_tags(widget)
-  local list = ""
+  local single_tags = {}
+  local icount = {}
+  local ticount = 0
+  local count = 0
+  local nimages = #dt.database
+  local ntags = #dt.tags
+  
   for _,tag in ipairs(dt.tags) do
     if not string.find(tag.name, "|")
     then
-      if list ~= "" then
-        list = list.."\n"
-      end
-      -- Count images for tag
-      local count = 0
-      for i,image in ipairs(dt.database) do
-        local tags = image:get_tags ()
-        for _,t in ipairs (tags) do
-          if t.name == tag.name then
-            count = count + 1
-          end
-        end
-      end
-      list = list..tag.name.." ["..tostring(count).." images]"
+      table.insert(single_tags, tag)
+      table.insert(icount,0)
     end
+    count = count + 1
+    dt.print(tostring(count).."/"..tostring(ntags))
   end
-  if list == ""
-  then dt.print("no single tag")
-  else dt.print(list)
+
+  count = 0
+  for _,image in ipairs(dt.database) do
+    local iflag = false
+    local tags = image:get_tags ()
+    for _,tag in ipairs(tags) do 
+      for i,stag in ipairs(single_tags) do 
+        if tag.name == stag.name then
+          icount[i] = icount[i] + 1
+          iflag = true
+        end         
+      end
+    end
+    if iflag then ticount = ticount + 1 end
+    count = count + 1
+    dt.print(tostring(count).."/"..tostring(nimages))
+  end  
+
+  for i,tag in ipairs(single_tags) do
+    dt.print_log(tag.name.." ["..tostring(icount[i]).." images]")
+  end
+
+  if single_tags
+  then
+    dt.print(tostring(#single_tags).." tags for "..tostring(ticount).." images")
+    dt.print_log(tostring(#single_tags).." tags for "..tostring(ticount).." images")
+  else
+    dt.print("no single tag")
+    dt.print_log("no single tag")
   end
 end
 
 local function delete_orphan_tags(widget)
   local count = 0
+  local single_tags = {}
+  
   for _,tag in ipairs(dt.tags) do
     if not string.find(tag.name, "|")
     then
-      dt.print_log("deleted tag: "..tag.name)
-      dt.tags.delete(tag)
-      count = count + 1
+      table.insert(single_tags, tag)
     end
   end
-  dt.print(tostring(count).." deleted tag")
+  for _,tag in pairs(single_tags) do
+    local tag_name = tag.name
+    tag:delete()
+    dt.print_log("deleted tag: "..tag_name)
+    count = count + 1 
+  end
+  if count == 0
+  then dt.print("no tag to delete")
+  else dt.print(tostring(count).." deleted tag(s)")
+  end
 end
 
 local maintain_widget = dt.new_widget ("box") {

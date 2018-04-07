@@ -1,0 +1,23 @@
+#------------------------------------------------------------------------------
+# Exiftool Argument file written to add/update <location> IPTC to 
+# HierarchicalSubject in Lightroom XMP files when fits :
+#   places|<country>|<state>|<city>
+# or
+#   places|<country>|<state>|<location>
+# XMP file without <location> IPTC are unchanged
+# Command line : path\exiftool.exe -@ path\ExifExifLRlocation.txt FILES
+#------------------------------------------------------------------------------
+
+#-P
+-overwrite_original
+-tagsFromFile
+@
+-m
+-if
+$XMP-iptcCore:Location
+-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/}
+-sep
+, 
+
+#full command line
+#exiftool -tagsFromFile @ -m -if "$XMP-iptcCore:Location" "-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/}" -sep ", "  D:\Documents\Images\Photos\2010\2017\20171118_Tiradentes\*.xmp
