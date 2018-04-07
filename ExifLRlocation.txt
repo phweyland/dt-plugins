@@ -3,7 +3,7 @@
 # HierarchicalSubject in Lightroom XMP files when fits :
 #   places|<country>|<state>|<city>
 # or
-#   places|<country>|<state>|<location>
+#   places|<country>|<state>|<city>|<location>
 # XMP file without <location> IPTC are unchanged
 # Command line : path\exiftool.exe -@ path\ExifExifLRlocation.txt FILES
 #------------------------------------------------------------------------------
