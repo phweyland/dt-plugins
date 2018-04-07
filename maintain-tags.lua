@@ -26,16 +26,15 @@ local dt = require "darktable"
 local new_tag = dt.new_widget("entry") { tooltip = "enter new tag name" }
 local defaultcombobox = "enter tag name"
 local locked = false
-local updatedcombobox = true
 local comboboxcount = 0
 
 local function updatetagslist(cbox)
   if locked == true then
-    dt.print_log("Attempt to reenter: "..tostring(comboboxcount)..";text entered: "..cbox.value)
+    dt.print_log("attempt to reenter: "..tostring(comboboxcount)..";text entered: "..cbox.value)
     return
   end
   comboboxcount = comboboxcount + 1
-  dt.print_log("Enter count: "..tostring(comboboxcount))
+  dt.print_log("enter count: "..tostring(comboboxcount))
   locked = true
   local nbentries = #cbox
   local entry = cbox.value
@@ -43,12 +42,13 @@ local function updatetagslist(cbox)
   local maxentries = 50
   
   if not entry then
-    updatedcombobox = false
-    dt.print_log("No entry")
-  elseif updatedcombobox then
-    updatedcombobox = false
-    dt.print_log("Enter again after change")
-  else
+    dt.print_log("no entry")
+  elseif entry == defaultcombobox then
+    dt.print_log("select default text") 
+  elseif index ~= 0 then
+    new_tag.text = entry
+    dt.print_log("tag choosen: "..entry)
+  else  -- user entered a text
     dt.print_log("text entered: "..tostring(entry).."; ".."number of entries: "..tostring(nbentries).."; selected: "..tostring(index))
     -- add matching entries
     local pattern = string.gsub(entry,"([%(%)%.%%%-%+%*%?%$%^])","%%%1")
@@ -67,20 +67,16 @@ local function updatetagslist(cbox)
     if i == 1 -- no match
     then
 --      cbox[1] = defaultcombobox
-      dt.print_log("Tag not found: "..tostring(entry))
-      dt.print ("Tag not found: "..tostring(entry))
+      dt.print_log("tag not found: "..tostring(entry))
+      dt.print ("tag not found: "..tostring(entry))
     else
-      dt.print_log("Nb of tags found: "..tostring(i-1))
-      if index ~= 0 then
-        new_tag.text = cbox[1]
-      end
+      dt.print_log("nb of tags found: "..tostring(i-1))
       --clear rest of the list
       if (nbentries > i) and (i > 1) then
         for j = nbentries, i, -1 do
           cbox[j] = nil
         end
       end
-      updatedcombobox = true
       cbox.value = 1
     end
   end
@@ -99,15 +95,29 @@ local combobox = dt.new_widget("combobox"){
   defaultcombobox
   }
 
+local function maintain_reset(widget)
+  locked = true
+  dt.print_log("reset maintain tag widget")
+  new_tag.text = ""
+  combobox[1] = defaultcombobox
+  combobox.value = 1
+  if (#combobox > 1) then
+    for j = #combobox, 2, -1 do
+      combobox[j] = nil
+    end
+  end
+  locked = false
+end
+
 -- This function does the renaming
 local function rename_tags(widget)
   -- If entries are empty, return
   if combobox.value == '' then
-    dt.print ("Old tag can't be empty")
+    dt.print ("old tag can't be empty")
     return
   end
   if new_tag.text == '' then
-    dt.print ("New tag can't be empty")
+    dt.print ("new tag can't be empty")
     return
   end
   
@@ -116,7 +126,7 @@ local function rename_tags(widget)
   -- Check if old tag exists
   local ot = dt.tags.find (combobox.value)
   if not ot then
-    dt.print ("Old tag does not exist")
+    dt.print ("old tag does not exist")
     return
   end
 
@@ -149,18 +159,11 @@ local function rename_tags(widget)
   dt.tags.delete (ot)
 
   job.valid = false
-  dt.print ("Renamed tags for " .. Count .. " images")
+  dt.print ("renamed tags for " .. Count .. " images")
   combobox.editable = true
   new_tag.editable = true
 end
 
-local function maintain_reset(widget)
-  local items = #dt.tags
-  dt.print_log("number of tags: "..tostring(items))
-  new_tag.text = ''
-  combobox[1] = defaulttagentry
-  combobox.value = 1
-end
 
 local function show_orphan_tags(widget)
   local single_tags = {}
