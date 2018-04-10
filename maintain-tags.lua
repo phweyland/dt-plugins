@@ -112,54 +112,48 @@ end
 -- This function does the renaming
 local function rename_tags(widget)
   -- If entries are empty, return
-  if combobox.value == '' then
+  if combobox.value == "" then
     dt.print ("old tag can't be empty")
     return
   end
-  if new_tag.text == '' then
+  if new_tag.text == "" then
     dt.print ("new tag can't be empty")
     return
   end
   
-  local Count = 0
-
   -- Check if old tag exists
-  local ot = dt.tags.find (combobox.value)
+  local ot = dt.tags.find(combobox.value)
   if not ot then
     dt.print ("old tag does not exist")
     return
   end
-
-  -- Show job
-  local job = dt.gui.create_job ("Renaming tag", true)
   
   combobox.editable = false
   new_tag.editable = false
 
+  -- Check if new tag exists
+  local nt = dt.tags.find(new_tag.text)
+  if not nt then  -- doesn't exist
+--[[ unfortunately tag.name is not writable
+    nt = ot
+    nt.name = new_tag.text
+--]]
   -- Create if it does not exists
-  local nt = dt.tags.create (new_tag.text)
-
-  -- Search images for old tag
-  dbcount = #dt.database
-  for i,image in ipairs(dt.database) do
-    -- Update progress bar
-    job.percent = i / dbcount
-    
-    local tags = image:get_tags ()
-    for _,t in ipairs (tags) do
-      if t.name == combobox.value then
-        -- Found it, attach new tag
-        image:attach_tag (nt)
-        Count = Count + 1
-      end
+    nt = dt.tags.create (new_tag.text)
+  end
+  dt.print_log ("transfer images to new tag")
+  -- Transfer images from old to new tag
+  if #ot ~= 0 then  -- iteration issue
+    for i,image in ipairs(ot) do
+      image:attach_tag(nt)
+      if i == #ot then break end  -- iteration issue
     end
   end
-
+  dt.print("renamed tag: "..combobox.value.." to: "..new_tag.text.." for "..#ot.." images")
   -- Delete old tag, this removes it from all images
   dt.tags.delete (ot)
 
-  job.valid = false
-  dt.print ("renamed tags for " .. Count .. " images")
+  
   combobox.editable = true
   new_tag.editable = true
 end
