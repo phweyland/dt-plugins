@@ -170,42 +170,24 @@ local function show_orphan_tags(widget)
   local icount = {}
   local ticount = 0
   local count = 0
-  local nimages = #dt.database
   local ntags = #dt.tags
   
   for _,tag in ipairs(dt.tags) do
     if not string.find(tag.name, "|")
     then
       table.insert(single_tags, tag)
-      table.insert(icount,0)
+      table.insert(icount,#tag)
+      ticount = ticount + #tag
     end
     count = count + 1
     dt.print(tostring(count).."/"..tostring(ntags))
   end
 
-  count = 0
-  for _,image in ipairs(dt.database) do
-    local iflag = false
-    local tags = image:get_tags ()
-    for _,tag in ipairs(tags) do 
-      for i,stag in ipairs(single_tags) do 
-        if tag.name == stag.name then
-          icount[i] = icount[i] + 1
-          iflag = true
-        end         
-      end
-    end
-    if iflag then ticount = ticount + 1 end
-    count = count + 1
-    dt.print(tostring(count).."/"..tostring(nimages))
-  end  
-
-  for i,tag in ipairs(single_tags) do
-    dt.print_log(tag.name.." ["..tostring(icount[i]).." images]")
-  end
-
   if single_tags
   then
+    for i,tag in ipairs(single_tags) do
+      dt.print_log(tag.name.." ["..tostring(icount[i]).." images]")
+    end
     dt.print(tostring(#single_tags).." tags for "..tostring(ticount).." images")
     dt.print_log(tostring(#single_tags).." tags for "..tostring(ticount).." images")
   else
