@@ -10,8 +10,6 @@
 #     - remove the first level of remaining tags. That way places|France|Paris
 #       becomes France|Paris. "places" is not an interesting keyword
 #     - the result updates XMP:HierarchicalSubject
-#     - this list is used and transformed to set XMP:Subject. Duplicates are
-#       removed.
 # Command line : path\exiftool.exe -@ path\ExifToolWeb.txt FILES
 #------------------------------------------------------------------------------
 
@@ -79,9 +77,5 @@
 -IPTC:CopyrightNotice < XMP-dc:Rights
 -IPTC:Keywords < ${HierarchicalSubject;s/((gens|piwigo)\|[^,]+, |, (gens|piwigo)\|[^,]+|$)//g;s/(^|, )[^\|]+\|/$1/g;s/\|/, /g;NoDups}
 -IPTC:ObjectName < XMP-dc:Title
--IPTC:Country-PrimaryLocationName < ${HierarchicalSubject;s/^.*places\|([^\|,]*).*/$1/ or $_=undef}
--IPTC:Province-State < ${HierarchicalSubject;s/^.*places\|([^\|,]*)\|([^\|,]*).*/$2/ or $_=undef}
--IPTC:City < ${HierarchicalSubject;s/^.*places\|([^\|,]*)\|([^\|,]*)\|([^\|,]*).*/$3/ or $_=undef}
--IPTC:Sub-location < ${HierarchicalSubject;s/^.*places\|([^\|,]*)\|([^\|,]*)\|([^\|,]*)\|([^\|,]*).*/$4/ or $_=undef}
 
 
