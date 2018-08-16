@@ -1,61 +1,28 @@
 #------------------------------------------------------------------------------
 # Exiftool Argument file written to add/update <location> IPTC to 
 # HierarchicalSubject in Lightroom XMP files when fits :
-#   places|<country>|<state>|<city>
-# or
-#   places|<country>|<state>|<city>|<location>
-# XMP file without <location> IPTC are unchanged
+#   places|<country>|<state>|<city>[|<location>[|..]]
 # Command line : path\exiftool.exe -@ path\ExifExifLRlocation.txt FILES
 #------------------------------------------------------------------------------
 
 
-#-if
-#$XMP-iptcCore:Location
 #remove Subject (single tags)
 -Subject=
 
 #Keep only HierarchicalSubject and add location when exists
-#-P
 -overwrite_original
 -m
 -tagsFromFile
 @
--HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');$loc ? s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/ : s/.*/$_/ }
+-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');$loc ? s/(places\|[^\|,]+\|[^\|,]+\|[^\|,]+)[^,]*(,?.*)/$1\|$loc$2/ : s/.*/$_/ }
 -sep
 , 
 -ext
 XMP
-
-#Add Creator if exists
--execute
-#-P
--overwrite_original
--m
--tagsFromFile
-@
--HierarchicalSubject<${HierarchicalSubject;my @cre=$self->GetValue('Creator');$cre[0] ? s/(Iptc\|Creator)([^,]*)|$/$1\|$cre[0]/ : s/.*/$_/ }
--sep
-, 
 -ext
-XMP
-
-#Add Rights if exists
--execute
-#-P
--overwrite_original
--m
--tagsFromFile
-@
--HierarchicalSubject<${HierarchicalSubject;my $rig=$self->GetValue('Rights');$rig ? s/(Iptc\|Rights)([^,]*)|$/$1\|$rig/ : s/.*/$_/ }
--sep
-, 
+JPG
 -ext
-XMP
+TIF
 
-#full command line / file updated only is location exists
-#exiftool -tagsFromFile @ -m -if "$XMP-iptcCore:Location" "-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/}" -sep ", "  D:\Documents\Images\Photos\2010\2017\20171118_Tiradentes\*.xmp
-#full command line / always updated in case other tags have to be set
-#exiftool -v2 -tagsFromFile @ -m "-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');$loc ?  s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/ : s/.*/$_/ }" -sep ", " -ext XMP  D:\Documents\Images\Photos\2010\2017\20171118_Tiradentes
-#full command line / add location, creator and rights
-#exiftool -tagsFromFile @ -m "-HierarchicalSubject<${HierarchicalSubject;my @cre=$self->GetValue('Creator');$cre[0] ?  s/(Iptc\|Creator)([^,]*)|$/$1\|$cre[0]/ : s/.*/$_/ }" -sep ", " -execute -tagsFromFile @ -m "-HierarchicalSubject<${HierarchicalSubject;my $rig=$self->GetValue('Rights');$rig ?  s/(Iptc\|Rights)([^,]*)|$/$1\|$rig/ : s/.*/$_/ }" -sep ", " -execute -tagsFromFile @ -m "-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');$loc ?  s/(places\|[^\|,]*\|[^\|,]*\|[^\|,]*)\|.*|$/$1\|$loc/ : s/.*/$_/ }" -sep ", " -common_args -overwrite_original -ext XMP -v2  D:\Documents\Images\Photos\2010\2017\20171118_Tiradentes
-
+#full command line 
+#exiftool -tagsFromFile @ -m -if "$XMP-iptcCore:Location" "-HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');s/(places\|[^\|,]+\|[^\|,]+\|[^\|,]+)[^,]*(,?.*)/$1\|$loc$2/}" -sep ", "  D:\Documents\Images\Photos\2010\2017\20171118_Tiradentes\*.xmp
