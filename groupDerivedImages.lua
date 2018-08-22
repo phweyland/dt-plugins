@@ -21,6 +21,7 @@ Available commands:
     - metadata
     - GPS data
     - tags
+- set leader: set the selected images as top of their group
 - copy: copy selected image's metadata
 - paste: paste copied metadata to selected images, based on previous switches.
 - clear: clear selected images' metadata, based on previous switches.
@@ -70,11 +71,11 @@ local function getmasterimage(filename,mfilm)
 	return nil
 end
 -- group selected images to master images
-local function groupDerivedImages()
+local function groupDerivedImages(images)
 --  require('mobdebug').on()
 	local list = {}
 --	local message = ""
-	for i,image in ipairs(dt.gui.action_images) do
+	for i,image in ipairs(images) do
 		list[i] = {}
 		list[i].image = image
 		list[i].ppath = image.path:match("(.-)[\\/][^\\/]+$")
@@ -85,7 +86,7 @@ local function groupDerivedImages()
 				list[i].mfilename = list[i].mimage.filename
 			end
 		end
-    end
+  end
 		for _,image in pairs(list) do
 		-- put the image in the group of the master image
 		if image.mimage ~= nil then image.image:group_with(image.mimage) end
@@ -208,10 +209,10 @@ local function mpasteMetadata(images)
 end
 
 -- function update derived metadata from master images
-local function updateDerivedMetadata()
+local function updateDerivedMetadata(images)
 	local list = {}
 --	local message = ""
-	for i,image in ipairs(dt.gui.action_images) do
+	for i,image in ipairs(images) do
 		list[i] = {}
 		list[i].image = image
     local members = image:get_group_members()
@@ -239,19 +240,26 @@ local function updateDerivedMetadata()
 end
 
 -- set images as master
-local function setMaster()
+local function setMaster(images)
     -- Check if darktable|group|master tag exists
   local mt = dt.tags.find ("darktable|group|master")
   if not mt then
     mt = dt.tags.create ("darktable|group|master")
   end
-  for _, image in ipairs(dt.gui.action_images) do
+  for _, image in ipairs(images) do
     image:attach_tag(mt)
   end
 end
 
+-- set images as leader (top of group)
+local function setLeader(images)
+  for _, image in ipairs(images) do
+    image:make_group_leader()
+  end
+end
+
 -- clear image metadata
-local function mclearMetadata()
+local function mclearMetadata(images)
   if bRateColor.value then
     rating = 0
     red = false
@@ -276,7 +284,7 @@ local function mclearMetadata()
     tags = {}
   end
   have_data = true
-  for _, image in ipairs(dt.gui.action_images) do
+  for _, image in ipairs(images) do
     pasteMetadata(image)
 dt.print("x")
   end
@@ -288,42 +296,49 @@ local bsetmaster = dt.new_widget("button")
 {
         label = "        set master       ",
         clicked_callback = function (_)
-          setMaster()
+          setMaster(dt.gui.action_images)
         end
 }
 local bgrouptomaster = dt.new_widget("button")
 {
         label = "      group to master    ",
         clicked_callback = function (_)
-          groupDerivedImages()
+          groupDerivedImages(dt.gui.action_images)
         end
+}
+local bsetleader = dt.new_widget("button")
+{
+  label = "        set leader      ",
+  clicked_callback = function (_)
+    setLeader(dt.gui.action_images)
+  end
 }
 local bupdatefrommaster = dt.new_widget("button")
 {
-	label = "update from master",
+	label = "   update from master   ",
   clicked_callback = function (_)
-  	updateDerivedMetadata()
+  	updateDerivedMetadata(dt.gui.action_images)
   end
 }
 local bcopymetadata = dt.new_widget("button")
 {
-  label = "       copy           ",
+  label = "        copy            ",
   clicked_callback = function (_)
     copyMetadata(dt.gui.action_images[1])
   end
 }
 local bpastemetadata = dt.new_widget("button")
 {
-  label = "       paste         ",
+  label = "        paste           ",
 	clicked_callback = function (_)
     mpasteMetadata(dt.gui.action_images)
   end
 }
 local bclearmetadata = dt.new_widget("button")
 {
-  label = "       clear         ",
+  label = "        clear           ",
   clicked_callback = function (_)
-    mclearMetadata()
+    mclearMetadata(dt.gui.action_images)
   end
 }
 
@@ -366,7 +381,12 @@ else
         bgrouptomaster
       },
       dt.new_widget("separator"){},
-      bupdatefrommaster,
+			dt.new_widget("box") -- widget
+      {
+        orientation = "horizontal",
+      	bupdatefrommaster,
+				bsetleader
+			},
       dt.new_widget("separator"){},
       dt.new_widget("box") -- widget
       {
@@ -398,22 +418,40 @@ else
   )
 end
 
+-- register event set selected images as master
+dt.register_event("shortcut",
+	function(event, shortcut) setMaster(dt.gui.action_images) end,
+	"g-set master"
+)
+-- register event set selected images as leader
+dt.register_event("shortcut",
+	function(event, shortcut) setLeader(dt.gui.action_images) end,
+	"g-set leader"
+)
 -- register event group selected images to master
-dt.register_event("shortcut",groupDerivedImages,"g-group derived images")
+dt.register_event("shortcut",
+	function(event, shortcut) groupDerivedImages(dt.gui.action_images) end,
+	"g-group derived images"
+)
 -- register event copy master images metadata to selected images
-dt.register_event("shortcut",updateDerivedMetadata,"g-update derived metadata")
-
+dt.register_event("shortcut",
+	function(event, shortcut) updateDerivedMetadata(dt.gui.action_images) end,
+	"g-update derived metadata"
+)
 -- register event copy metadata from selected image
-dt.register_event(
-  "shortcut",
-  function(event, shortcut) copy(dt.gui.action_images[1]) end,
-  "copy metadata"
+dt.register_event("shortcut",
+  function(event, shortcut) copyMetadata(dt.gui.action_images[1]) end,
+  "g-copy metadata"
 )
 -- register event paste metadata to selected images
-dt.register_event(
-  "shortcut",
-  function(event, shortcut) paste(dt.gui.action_images) end,
-  "paste metadata"
+dt.register_event("shortcut",
+  function(event, shortcut) mpasteMetadata(dt.gui.action_images) end,
+  "g-paste metadata"
+)
+-- register event clear metadata of selected images
+dt.register_event("shortcut",
+  function(event, shortcut) mclearMetadata(dt.gui.action_images) end,
+  "g-clear metadata"
 )
 
 -- register exit event
