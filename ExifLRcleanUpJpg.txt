@@ -8,6 +8,8 @@
 
 #remove Subject (single tags)
 -Subject=
+-IPTC=
+-Keywords=
 
 #Keep only HierarchicalSubject and add location when exists
 -overwrite_original
@@ -17,8 +19,8 @@
 -HierarchicalSubject<${HierarchicalSubject;my $loc=$self->GetValue('Location');$loc ? s/(places\|[^\|,]+\|[^\|,]+\|[^\|,]+)[^,]*(,?.*)/$1\|$loc$2/ : s/.*/$_/ }
 -sep
 , 
--ext
-XMP
+#-ext
+#XMP
 -ext
 JPG
 -ext
