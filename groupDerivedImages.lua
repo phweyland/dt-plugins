@@ -139,7 +139,6 @@ end
 local NaN = 0/0
 
 local have_data = false
-local update_di = false
 local rating = 0
 local red = false
 local green = false
@@ -196,26 +195,26 @@ end
 -- paste metadata to image
 local function pasteMetadata(image)
   if have_data then
-    if update_di or bRateColor.value then
+    if bRateColor.value then
       image.rating = rating
       image.red = red
       image.green = green
       image.yellow = yellow
       image.blue = blue
     end
-    if update_di or bMetadata.value then
+    if bMetadata.value then
       image.title = title
       image.description = description
       image.creator = creator
       image.publisher = publisher
       image.rights = rights
     end
-    if update_di or bGPS.value then
+    if bGPS.value then
       image.elevation = elevation
       image.latitude = latitude
       image.longitude = longitude
     end
-    if update_di or bTags.value then
+    if bTags.value then
       -- Clear unused old tags
       for _, tag in ipairs(image:get_tags()) do
 				if tag.name ~= nil then
@@ -243,7 +242,6 @@ end
 -- paste metadata to selected images
 local function mpasteMetadata(images)
 	local di = 0
-	update_di = false
   for _, image in ipairs(images) do
     pasteMetadata(image)
 		di = di + 1
@@ -301,7 +299,6 @@ dt.print_log("image to be copied "..pairimage.mimage.filename.." to "..pairimage
 	dt.print_log("derived "..tostring(di).." master "..tostring(mi))
 	message2 = ""
 	message3 = ""
-	update_di = true
 	for _,grp in ipairs(list) do
     if grp.mimage ~= nil then
       copyMetadata(grp.mimage)
@@ -311,7 +308,6 @@ dt.print_log("image to be copied "..pairimage.mimage.filename.." to "..pairimage
 		dt.print("derived "..tostring(di).." master "..tostring(mi).." copied "..tostring(ci).."\n"..message2..message3)
 	end
   dt.print_log("copied "..tostring(ci))
-	update_di = false
 end
 
 -- set images as master
@@ -344,7 +340,6 @@ end
 -- clear image metadata
 local function mclearMetadata(images)
 	local di = 0
-	update_di = false
   if bRateColor.value then
     rating = 0
     red = false
