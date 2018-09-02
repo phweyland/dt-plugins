@@ -42,6 +42,16 @@ dt.configuration.check_version(...,{2,0,0},{3,0,0},{4,0,0},{5,0,0})
 -- Tell gettext where to find the .mo file translating messages for a particular domain
 gettext.bindtextdomain("test",dt.configuration.config_dir.."/lua/locale/")
 
+-- generic function on table
+local function has_value (tab, val)
+  for index, value in ipairs(tab) do
+    if value == val then
+      return index
+    end
+  end
+  return nil
+end
+
 -- get film object for this path
 local function getfilm(path)
 	for _, film in ipairs(dt.films) do
@@ -74,6 +84,8 @@ end
 local function groupDerivedImages(images)
 --  require('mobdebug').on()
 	local list = {}
+	local fi = 0
+	local gi = 0
 --	local message = ""
 	for i,image in ipairs(images) do
 		list[i] = {}
@@ -84,17 +96,23 @@ local function groupDerivedImages(images)
 			list[i].mimage = getmasterimage(image.filename, list[i].mfilm)
 			if list[i].mimage ~= nil then
 				list[i].mfilename = list[i].mimage.filename
+				fi = fi + 1
 			end
 		end
   end
-		for _,image in pairs(list) do
-		-- put the image in the group of the master image
-		if image.mimage ~= nil then image.image:group_with(image.mimage) end
+	dt.print("masters found "..tostring(fi))
+	for _,image in pairs(list) do
+	-- put the image in the group of the master image
+		if image.mimage ~= nil then
+			image.image:group_with(image.mimage)
+			gi = gi + 1
+      dt.print("masters found "..tostring(fi).." grouped "..tostring(gi))
+    	dt.print_log("masters found "..tostring(fi).." grouped "..tostring(gi))
+		end
 --message = message.." "..image.image.filename.." -> ".. tostring(image.mfilename).."\n"
 	end
 --dt.print_log(message)
 end
-
 
 -- Metadata related data
 local bRateColor = dt.new_widget("check_button")
@@ -121,6 +139,7 @@ end
 local NaN = 0/0
 
 local have_data = false
+local update_di = false
 local rating = 0
 local red = false
 local green = false
@@ -136,6 +155,10 @@ local elevation = NaN
 local latitude = NaN
 local longitude = NaN
 local tags = {}
+
+local message1 = ""
+local message2 = ""
+local message3 = ""
 
 -- copy Metadata from image
 local function copyMetadata(image)
@@ -159,41 +182,57 @@ local function copyMetadata(image)
     longitude = image.longitude
     tags = {}
     for _, tag in ipairs(image:get_tags()) do
-      if not (string.sub(tag.name, 1, string.len("darktable|")) == "darktable|") then
-        table.insert(tags, tag)
-      end
+			if tag.name ~= nil then
+	      if not (string.sub(tag.name, 1, string.len("darktable|")) == "darktable|") then
+	        table.insert(tags, tag)
+	      end
+			else
+				message2 = "Error - Nul tag detected on master image "
+				dt.print_log(message2..image.filename)
+			end
     end
   end
 end
 -- paste metadata to image
 local function pasteMetadata(image)
   if have_data then
-    if bRateColor.value then
+    if update_di or bRateColor.value then
       image.rating = rating
       image.red = red
       image.green = green
       image.yellow = yellow
       image.blue = blue
     end
-    if bMetadata.value then
+    if update_di or bMetadata.value then
       image.title = title
       image.description = description
       image.creator = creator
       image.publisher = publisher
       image.rights = rights
     end
-    if bGPS.value then
+    if update_di or bGPS.value then
       image.elevation = elevation
       image.latitude = latitude
       image.longitude = longitude
     end
-    if bTags.value then
-    -- Clear old tags
+    if update_di or bTags.value then
+      -- Clear unused old tags
       for _, tag in ipairs(image:get_tags()) do
-        if not (string.sub(tag.name, 1, string.len("darktable|")) == "darktable|") then
-          image:detach_tag(tag)
-        end
+				if tag.name ~= nil then
+	        if not (string.sub(tag.name, 1, string.len("darktable|")) == "darktable|") then
+						tagi = has_value(tags, tag)
+						if tagi ~= nil then
+							table.remove(tags, tagi) -- avoid to remove it and add it again later on
+						else
+	          	image:detach_tag(tag)
+						end
+	        end
+				else
+					message3= "Error - Nul tag detected on derived image "
+					dt.print_log(message3..image.filename)
+				end
       end
+      -- add the remaining tags
       for _, tag in ipairs(tags) do
         image:attach_tag(tag)
       end
@@ -203,44 +242,81 @@ end
 
 -- paste metadata to selected images
 local function mpasteMetadata(images)
+	local di = 0
+	update_di = false
   for _, image in ipairs(images) do
     pasteMetadata(image)
+		di = di + 1
   end
+	dt.print("pasted "..tostring(mi))
+	dt.print_log("pasted "..tostring(mi))
+end
+
+-- check if the image is a master
+local function isamaster(m)
+	tags = m:get_tags()
+	for _,tag in ipairs(tags) do
+--dt.print_log("udpate image "..m.filename.." tagname "..tostring(tag.name))
+		if tag.name ~= nil then
+			if tag.name == "darktable|group|master" then
+				return m
+			end
+		else
+			message2 = "Error - Nul tag detected on master image "
+			dt.print_log(message2..m.filename)
+		end
+	end
+	return nil
 end
 
 -- function update derived metadata from master images
 local function updateDerivedMetadata(images)
 	local list = {}
---	local message = ""
-	for i,image in ipairs(images) do
-		list[i] = {}
-		list[i].image = image
+	local di = 0
+	local mi = 0
+	local ci = 0
+	for _,image in ipairs(images) do
+		local pairimage = {}
+		pairimage.image = image
+		di = di + 1
     local members = image:get_group_members()
+--message = "derived "..image.filename.." members "
+--for _,m in ipairs(members) do message = message..m.filename.." " end
+--dt.print_log(message)
 		for _,m in ipairs(members) do
+dt.print_log("member "..m.filename)
       if m ~= image then -- avoid itself
-        tags = m:get_tags()
-        for _,tag in ipairs(tags) do
-          if tag.name == "darktable|group|master" then
-            list[i].mimage = m
-            break
-          end
-        end
+				if isamaster(m) then
+					mi = mi + 1
+					pairimage.mimage = m
+dt.print_log("image to be copied "..pairimage.mimage.filename.." to "..pairimage.image.filename)
+--					list[mi] = pairimage
+					table.insert(list, pairimage)
+					break
+				end
 			end
 		end
   end
-
-	for _,grp in pairs(list) do
+	dt.print("derived "..tostring(di).." master "..tostring(mi))
+	dt.print_log("derived "..tostring(di).." master "..tostring(mi))
+	message2 = ""
+	message3 = ""
+	update_di = true
+	for _,grp in ipairs(list) do
     if grp.mimage ~= nil then
       copyMetadata(grp.mimage)
       pasteMetadata(grp.image)
---message = message.. tostring(grp.mimage.id).." "..tostring(grp.image.id).."\n"
-    end
+			ci = ci + 1
+		end
+		dt.print("derived "..tostring(di).." master "..tostring(mi).." copied "..tostring(ci).."\n"..message2..message3)
 	end
---dt.print_log(message)
+  dt.print_log("copied "..tostring(ci))
+	update_di = false
 end
 
 -- set images as master
 local function setMaster(images)
+	local mi = 0
     -- Check if darktable|group|master tag exists
   local mt = dt.tags.find ("darktable|group|master")
   if not mt then
@@ -248,18 +324,27 @@ local function setMaster(images)
   end
   for _, image in ipairs(images) do
     image:attach_tag(mt)
+		mi = mi + 1
+    dt.print("set master "..tostring(mi))
+  	dt.print_log("set master "..tostring(mi))
   end
 end
 
 -- set images as leader (top of group)
 local function setLeader(images)
+	local li = 0
   for _, image in ipairs(images) do
     image:make_group_leader()
+		li = li + 1
+    dt.print("set leader "..tostring(li))
+  	dt.print_log("set leader "..tostring(li))
   end
 end
 
 -- clear image metadata
 local function mclearMetadata(images)
+	local di = 0
+	update_di = false
   if bRateColor.value then
     rating = 0
     red = false
@@ -286,25 +371,26 @@ local function mclearMetadata(images)
   have_data = true
   for _, image in ipairs(images) do
     pasteMetadata(image)
-dt.print("x")
+		di = di + 1
   end
+	dt.print("cleared "..tostring(di))
   have_data = false
 end
 
 -- buttons definition
 local bsetmaster = dt.new_widget("button")
 {
-        label = "        set master       ",
-        clicked_callback = function (_)
-          setMaster(dt.gui.action_images)
-        end
+  label = "        set master       ",
+  clicked_callback = function (_)
+    setMaster(dt.gui.action_images)
+  end
 }
 local bgrouptomaster = dt.new_widget("button")
 {
-        label = "      group to master    ",
-        clicked_callback = function (_)
-          groupDerivedImages(dt.gui.action_images)
-        end
+  label = "      group to master    ",
+  clicked_callback = function (_)
+    groupDerivedImages(dt.gui.action_images)
+  end
 }
 local bsetleader = dt.new_widget("button")
 {
