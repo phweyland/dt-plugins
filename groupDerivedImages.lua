@@ -42,7 +42,7 @@ dt.configuration.check_version(...,{2,0,0},{3,0,0},{4,0,0},{5,0,0})
 -- Tell gettext where to find the .mo file translating messages for a particular domain
 gettext.bindtextdomain("test",dt.configuration.config_dir.."/lua/locale/")
 
--- generic function on table
+-- generic function on table - check if the value is in the table
 local function has_value (tab, val)
   for index, value in ipairs(tab) do
     if value == val then
@@ -60,6 +60,24 @@ local function getfilm(path)
 		end
 	end
 end
+
+-- check if the image is a master
+local function isamaster(m)
+	tags = m:get_tags()
+	for _,tag in ipairs(tags) do
+--dt.print_log("udpate image "..m.filename.." tagname "..tostring(tag.name))
+		if tag.name ~= nil then
+			if tag.name == "darktable|group|master" then
+				return m
+			end
+		else
+			message2 = "Error - Nul tag detected on master image "
+			dt.print_log(message2..m.filename)
+		end
+	end
+	return nil
+end
+
 --get master image in parent directory
 local function getmasterimage(filename,mfilm)
 	local base = filename:match("(.-)%.[^%.]+$"):upper()
@@ -69,10 +87,8 @@ local function getmasterimage(filename,mfilm)
 		mbase = im.filename:match("(.-)%.[^%.]+$"):upper()
 		if mbase == base:sub(1,#mbase) -- accept base longer than mbase
 		then
-      tags = im:get_tags()
-      for _,tag in ipairs(tags) do
-        if tag.name == "darktable|group|master"
-        then return im end
+      if isamaster(im) then
+        return im
       end
     end
 		i = i + 1 -- to avoid an index issue on this list
@@ -80,6 +96,19 @@ local function getmasterimage(filename,mfilm)
 	end
 	return nil
 end
+
+-- check that the two images are not already in the same group
+local function areAlreadyInSameGroup(image, mimage)
+  local members = image:get_group_members()
+  if has_value(members, image) then
+    if has_value(members, mimage) then
+--      dt.print_log("group leader "..tostring(members.leader.id))
+      return members.leader
+    end
+  end
+  return nil
+end
+
 -- group selected images to master images
 local function groupDerivedImages(images)
 --  require('mobdebug').on()
@@ -92,26 +121,29 @@ local function groupDerivedImages(images)
 		list[i].image = image
 		list[i].ppath = image.path:match("(.-)[\\/][^\\/]+$")
 		list[i].mfilm = getfilm(list[i].ppath)
+    dt.print_log("image "..image.filename.." path "..tostring(image.path).." parent "..tostring(list[i].ppath))
 		if list[i].mfilm ~= nil then
 			list[i].mimage = getmasterimage(image.filename, list[i].mfilm)
 			if list[i].mimage ~= nil then
 				list[i].mfilename = list[i].mimage.filename
 				fi = fi + 1
-			end
+        dt.print("masters found "..tostring(fi))
+      end
 		end
   end
 	dt.print("masters found "..tostring(fi))
-	for _,image in pairs(list) do
+  dt.print_log("masters found "..tostring(fi))
+	for _,imagefit in pairs(list) do
 	-- put the image in the group of the master image
-		if image.mimage ~= nil then
-			image.image:group_with(image.mimage)
+		if imagefit.mimage ~= nil then
+      if not areAlreadyInSameGroup(imagefit.image, imagefit.mimage) then
+        imagefit.image:group_with(imagefit.mimage)
+      end
 			gi = gi + 1
       dt.print("masters found "..tostring(fi).." grouped "..tostring(gi))
-    	dt.print_log("masters found "..tostring(fi).." grouped "..tostring(gi))
-		end
---message = message.." "..image.image.filename.." -> ".. tostring(image.mfilename).."\n"
+    end
 	end
---dt.print_log(message)
+  dt.print_log("masters found "..tostring(fi).." grouped "..tostring(gi))
 end
 
 -- Metadata related data
@@ -245,26 +277,9 @@ local function mpasteMetadata(images)
   for _, image in ipairs(images) do
     pasteMetadata(image)
 		di = di + 1
+    dt.print("pasted "..tostring(mi))
   end
-	dt.print("pasted "..tostring(mi))
 	dt.print_log("pasted "..tostring(mi))
-end
-
--- check if the image is a master
-local function isamaster(m)
-	tags = m:get_tags()
-	for _,tag in ipairs(tags) do
---dt.print_log("udpate image "..m.filename.." tagname "..tostring(tag.name))
-		if tag.name ~= nil then
-			if tag.name == "darktable|group|master" then
-				return m
-			end
-		else
-			message2 = "Error - Nul tag detected on master image "
-			dt.print_log(message2..m.filename)
-		end
-	end
-	return nil
 end
 
 -- function update derived metadata from master images
@@ -281,19 +296,21 @@ local function updateDerivedMetadata(images)
 --message = "derived "..image.filename.." members "
 --for _,m in ipairs(members) do message = message..m.filename.." " end
 --dt.print_log(message)
+    local mn = 0
 		for _,m in ipairs(members) do
-dt.print_log("member "..m.filename)
+      mn = mn + 1
+      dt.print_log("member "..m.path.."\\"..m.filename)
       if m ~= image then -- avoid itself
 				if isamaster(m) then
 					mi = mi + 1
 					pairimage.mimage = m
-dt.print_log("image to be copied "..pairimage.mimage.filename.." to "..pairimage.image.filename)
+dt.print_log(tostring(mi).." image to be copied "..pairimage.mimage.filename.." to "..pairimage.image.filename)
 --					list[mi] = pairimage
 					table.insert(list, pairimage)
-					break
 				end
 			end
 		end
+    dt.print_log("has "..tostring(mn).." members ")
   end
 	dt.print("derived "..tostring(di).." master "..tostring(mi))
 	dt.print_log("derived "..tostring(di).." master "..tostring(mi))
@@ -319,11 +336,13 @@ local function setMaster(images)
     mt = dt.tags.create ("darktable|group|master")
   end
   for _, image in ipairs(images) do
-    image:attach_tag(mt)
+    if not isamaster(image) then
+      image:attach_tag(mt)
+    end
 		mi = mi + 1
     dt.print("set master "..tostring(mi))
-  	dt.print_log("set master "..tostring(mi))
   end
+  dt.print_log("set master "..tostring(mi))
 end
 
 -- set images as leader (top of group)
@@ -333,8 +352,8 @@ local function setLeader(images)
     image:make_group_leader()
 		li = li + 1
     dt.print("set leader "..tostring(li))
-  	dt.print_log("set leader "..tostring(li))
   end
+  dt.print_log("set leader "..tostring(li))
 end
 
 -- clear image metadata
