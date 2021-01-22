@@ -15,7 +15,7 @@ its smallest quality.
 
   tested with Windows 10 64-bits and darktable 2.4.1
   
-## maintain-tags (derived from rename-tags)
+## maintain-tags (derived from rename-tags) - now in core dt
 
 - Select the tag to be renamed through combobox
 - Then rename the tag as in rename-tags
