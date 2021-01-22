@@ -5,6 +5,13 @@ Like a lot of people I'm trying to get out of Lightroom. The discovery of
 darktable is amazing. It has a lot of interesting features. Openess is not
 its smallest quality.
 
+## exif-info (2021/01/22)
+
+  This script allows to add exif info (from image file) to image information
+  module following the exiv2 syntax (see dt "output metadata tags" in "metadata
+  exportation"). Examples included in the script.
+  Requires the exiv2 executable.
+
 ## group Derived Images
 
   Assume that derived images are stored in a sub-folder of master images. They
